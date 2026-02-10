@@ -1,0 +1,25 @@
+- name: Restart Deployment
+  hosts: localhost
+  gather_facts: no
+  vars:
+    namespace: "production-app"
+    app_name: "web-frontend"
+
+  tasks:
+    - name: Restart deployment using rollout restart
+      command: oc rollout restart deployment/{{ app_name }} -n {{ namespace }}
+      register: restart_result
+      changed_when: "'restarted' in restart_result.stdout"
+
+    - name: Display restart status
+      debug:
+        msg: "Deployment {{ app_name }} has been restarted in namespace {{ namespace }}"
+
+    - name: Get pod status after restart
+      shell: oc get pods -n {{ namespace }} -l app={{ app_name }} --no-headers
+      register: pod_list
+      changed_when: false
+
+    - name: Show running pods
+      debug:
+        msg: "{{ pod_list.stdout_lines }}"
